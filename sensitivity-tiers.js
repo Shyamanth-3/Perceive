@@ -237,3 +237,41 @@ export function getConfidenceBadgeColor(confidence) {
   if (confidence >= 0.6) return 'yellow';
   return 'red';
 }
+
+/**
+ * Classifies the risk tier of an agent action.
+ * Action risk tier MUST be string ("safe" | "risky"), NEVER numeric 1, 2, 3.
+ * @param {object} action - Action payload { type: string, target_element_id?: string, value?: string, risk_tier?: string|number, sensitivity_tier?: number }
+ * @returns {'safe'|'risky'}
+ */
+export function classifyActionRisk(action) {
+  if (!action || typeof action !== 'object') {
+    return 'safe';
+  }
+
+  if (action.risk_tier === 'risky' || action.risk_tier === 'safe') {
+    return action.risk_tier;
+  }
+
+  if (typeof action.risk_tier === 'number') {
+    return (action.risk_tier === 1 || action.risk_tier === 2) ? 'risky' : 'safe';
+  }
+
+  if (action.sensitivity_tier === 1 || action.sensitivity_tier === 2) {
+    return 'risky';
+  }
+
+  const target = String(action.target_element_id || '').toLowerCase();
+  const val = String(action.value || '');
+
+  if (/card|pwd|password|email|phone|ssn|aadhaar|otp|cvv|credit/i.test(target)) {
+    return 'risky';
+  }
+
+  if (/\[(CARD_NUMBER|PASSWORD|AADHAAR|OTP|EMAIL|PHONE|NAME|AMOUNT|IFSC)(?:_\d+)?(?:\?|: [^\]]+)?\]/.test(val)) {
+    return 'risky';
+  }
+
+  return 'safe';
+}
+
