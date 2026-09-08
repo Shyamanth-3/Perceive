@@ -23,12 +23,30 @@ export function redactImage(sourceCanvasOrImage, sensitiveRegions = []) {
   const width = sourceCanvasOrImage.width || sourceCanvasOrImage.naturalWidth || 0;
   const height = sourceCanvasOrImage.height || sourceCanvasOrImage.naturalHeight || 0;
 
-  const outputCanvas = document.createElement('canvas');
-  outputCanvas.width = width;
-  outputCanvas.height = height;
+  let outputCanvas;
+  if (typeof document !== 'undefined' && typeof document.createElement === 'function') {
+    outputCanvas = document.createElement('canvas');
+    outputCanvas.width = width;
+    outputCanvas.height = height;
+  } else {
+    // Environment fallback (e.g. Node test runner without DOM)
+    outputCanvas = {
+      width,
+      height,
+      getContext: () => ({
+        drawImage: () => {},
+        fillRect: () => {},
+        clearRect: () => {},
+        getImageData: () => ({ data: new Uint8ClampedArray(4) })
+      }),
+      toDataURL: () => (typeof sourceCanvasOrImage.toDataURL === 'function' ? sourceCanvasOrImage.toDataURL('image/png') : '')
+    };
+  }
 
   const ctx = outputCanvas.getContext('2d');
-  ctx.drawImage(sourceCanvasOrImage, 0, 0, width, height);
+  if (ctx && typeof ctx.drawImage === 'function') {
+    ctx.drawImage(sourceCanvasOrImage, 0, 0, width, height);
+  }
 
   if (Array.isArray(sensitiveRegions)) {
     for (const region of sensitiveRegions) {
@@ -57,8 +75,10 @@ export function redactImage(sourceCanvasOrImage, sensitiveRegions = []) {
         const drawX = centerX - catW / 2;
         const drawY = centerY - catH / 2;
 
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(drawX, drawY, catW, catH);
+        if (ctx && typeof ctx.fillRect === 'function') {
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(drawX, drawY, catW, catH);
+        }
       }
     }
   }

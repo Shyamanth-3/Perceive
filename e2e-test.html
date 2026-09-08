@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dev 2 Redaction Pipeline E2E Demo</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      background-color: #0f172a;
+      color: #f8fafc;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    header {
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 1.6rem;
+      margin: 0 0 16px 0;
+      color: #38bdf8;
+    }
+    .stats-bar {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 12px 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .stat-label {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #38bdf8;
+      margin-top: 4px;
+    }
+    .main-container {
+      display: flex;
+      gap: 20px;
+      align-items: stretch;
+      min-height: 520px;
+    }
+    .column {
+      flex: 1;
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+    }
+    .column-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #334155;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    /* Section 1: Form styling */
+    .fake-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      background-color: #0f172a;
+      padding: 16px;
+      border-radius: 6px;
+      border: 1px solid #334155;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .form-group label {
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+    .fake-form input {
+      background-color: #1e293b;
+      border: 1px solid #475569;
+      color: #f8fafc;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    .total-display {
+      background-color: #334155;
+      padding: 10px 12px;
+      border-radius: 4px;
+      font-weight: bold;
+      color: #38bdf8;
+      font-size: 1rem;
+      text-align: right;
+    }
+    .btn-submit {
+      background-color: #0284c7;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 4px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    /* Section 2: Canvas */
+    .canvas-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #0f172a;
+      border-radius: 6px;
+      padding: 10px;
+      overflow: hidden;
+    }
+    #sanitized-canvas {
+      max-width: 100%;
+      border: 1px solid #334155;
+      border-radius: 4px;
+      background-color: #ffffff;
+    }
+    /* Section 3: Audit Log */
+    #audit-log {
+      flex: 1;
+      background-color: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 12px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 13px;
+      line-height: 1.45;
+      overflow-y: auto;
+      max-height: 480px;
+      white-space: pre-wrap;
+    }
+    .log-info { color: #64b5f6; }
+    .log-pass { color: #81c784; font-weight: bold; }
+    .log-warn { color: #ffd54f; }
+    .log-fail { color: #e57373; font-weight: bold; }
+    .log-header { color: #ba68c8; font-weight: bold; }
+
+    /* Button Controls */
+    .actions-bar {
+      margin-top: 20px;
+      display: flex;
+      gap: 16px;
+    }
+    .action-btn {
+      padding: 12px 24px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    .btn-run {
+      background-color: #10b981;
+      color: #042f2e;
+    }
+    .btn-run:hover {
+      background-color: #059669;
+      color: #ffffff;
+    }
+    .btn-leak {
+      background-color: #ef4444;
+      color: #450a0a;
+    }
+    .btn-leak:hover {
+      background-color: #dc2626;
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Dev 2 Privacy & Redaction Pipeline — End-to-End Demo</h1>
+    <div class="stats-bar">
+      <div class="stat-card">
+        <span class="stat-label">Fields Scanned</span>
+        <span class="stat-value" id="stat-scanned">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Sensitive Fields Redacted</span>
+        <span class="stat-value" id="stat-redacted">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Leakage Violations</span>
+        <span class="stat-value" id="stat-violations">0</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <!-- SECTION 1: Real Page -->
+    <section class="column">
+      <div class="column-title">Section 1: Real Page (DOM)</div>
+      <div class="fake-form" id="checkout-form">
+        <div class="form-group">
+          <label for="fullname-input">Full Name</label>
+          <input type="text" id="fullname-input" value="Jane Doe">
+        </div>
+        <div class="form-group">
+          <label for="email-input">Email Address</label>
+          <input type="email" id="email-input" autocomplete="email" value="jane.doe@example.com">
+        </div>
+        <div class="form-group">
+          <label for="pwd-input">Password</label>
+          <input type="password" id="pwd-input" value="SuperSecret123!">
+        </div>
+        <div class="form-group">
+          <label for="card-number-input">Card Number</label>
+          <input type="text" id="card-number-input" autocomplete="cc-number" value="4111 1111 1111 1111">
+        </div>
+        <div class="form-group">
+          <label for="phone-input">Phone:</label>
+          <input type="tel" id="phone-input" value="+1 (555) 019-2834">
+        </div>
+        <div class="total-display" id="total-amount-display">Total: $45.99</div>
+        <button type="submit" class="btn-submit" id="checkout-submit-btn">Checkout</button>
+      </div>
+    </section>
+
+    <!-- SECTION 2: Sanitized View -->
+    <section class="column">
+      <div class="column-title">Section 2: Sanitized View (Canvas)</div>
+      <div class="canvas-container">
+        <canvas id="sanitized-canvas" width="360" height="420"></canvas>
+      </div>
+    </section>
+
+    <!-- SECTION 3: Live Audit Log -->
+    <section class="column">
+      <div class="column-title">Section 3: Live Audit Log</div>
+      <div id="audit-log">Click "Run Full Pipeline" to start inspection...</div>
+    </section>
+  </main>
+
+  <div class="actions-bar">
+    <button class="action-btn btn-run" id="btn-run-pipeline">Run Full Pipeline</button>
+    <button class="action-btn btn-leak" id="btn-simulate-leak">Simulate Leak (Break It On Purpose)</button>
+  </div>
+
+  <script type="module">
+    import { detectPII } from './pii-patterns.js';
+    import { classifyElement, getElementId } from './dom-heuristics.js';
+    import { classifySensitivity, classifySensitivityWithConfidence, getConfidenceBadgeColor } from './sensitivity-tiers.js';
+    import { redactImage, canvasToBase64 } from './redaction-renderer.js';
+    import { processPageForRedaction } from './redaction-engine.js';
+    import { auditPayload, assertSafeToSend } from './leakage-auditor.js';
+    import { checkChannelConsistency, assertChannelsConsistent } from './channel-consistency-check.js';
+    import { createTokenVault } from './token-vault.js';
+
+    const auditLogEl = document.getElementById('audit-log');
+    const sanitizedCanvasEl = document.getElementById('sanitized-canvas');
+    const statScannedEl = document.getElementById('stat-scanned');
+    const statRedactedEl = document.getElementById('stat-redacted');
+    const statViolationsEl = document.getElementById('stat-violations');
+
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    function clearLog() {
+      auditLogEl.innerHTML = '';
+    }
+
+    function appendLog(text, type = 'info') {
+      const line = document.createElement('div');
+      line.className = `log-${type}`;
+      line.textContent = text;
+      auditLogEl.appendChild(line);
+      auditLogEl.scrollTop = auditLogEl.scrollHeight;
+    }
+
+    // Helper to draw a mock "before" canvas matching form field bounds
+    function createMockBeforeCanvas(elements, width = 360, height = 420) {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+
+      // Background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+
+      const formContainer = document.getElementById('checkout-form');
+      const formRect = formContainer.getBoundingClientRect();
+
+      for (const el of elements) {
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        
+        // Relative coordinates inside mock canvas
+        const rx = Math.round(rect.left - formRect.left);
+        const ry = Math.round(rect.top - formRect.top);
+        const rw = Math.round(rect.width);
+        const rh = Math.round(rect.height);
+
+        // Draw field container rectangle
+        ctx.fillStyle = el.tagName === 'BUTTON' ? '#0284c7' : (el.id === 'total-amount-display' ? '#e2e8f0' : '#f8fafc');
+        ctx.fillRect(rx, ry, rw, rh);
+
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(rx, ry, rw, rh);
+
+        // Draw field label / text
+        ctx.fillStyle = el.tagName === 'BUTTON' ? '#ffffff' : '#0f172a';
+        ctx.font = '12px system-ui, sans-serif';
+
+        let displayText = el.value || el.innerText || el.textContent || '';
+        if (el.type === 'password') {
+          displayText = '••••••••••••';
+        }
+        ctx.fillText(displayText.substring(0, 28), rx + 8, ry + rh / 2 + 4);
+      }
+
+      return canvas;
+    }
+
+    // Render resulting canvas to sanitized canvas element
+    function renderSanitizedCanvas(sourceCanvas) {
+      const ctx = sanitizedCanvasEl.getContext('2d');
+      ctx.clearRect(0, 0, sanitizedCanvasEl.width, sanitizedCanvasEl.height);
+      ctx.drawImage(sourceCanvas, 0, 0, sanitizedCanvasEl.width, sanitizedCanvasEl.height);
+    }
+
+    async function executePipeline(simulateLeak = false) {
+      clearLog();
+      appendLog('=== INITIALIZING PRIVACY & REDACTION PIPELINE ===', 'header');
+
+      const tokenVault = createTokenVault();
+      const elements = Array.from(document.querySelectorAll('input, button, div#total-amount-display'));
+
+      statScannedEl.textContent = elements.length;
+      let violationsCount = 0;
+
+      // 1. Create mock before canvas matching current DOM bounds
+      const mockCanvas = createMockBeforeCanvas(elements, sanitizedCanvasEl.width, sanitizedCanvasEl.height);
+
+      // Log DOM Detection
+      appendLog('\n--- STEP 1: DOM Inspection & Classification ---', 'header');
+      for (const el of elements) {
+        const id = getElementId(el);
+        const classification = classifyElement(el);
+        const textToScan = el.value || el.innerText || el.textContent || '';
+        const pii = detectPII(textToScan);
+        const sens = classifySensitivity(classification, pii, textToScan, null);
+        
+        appendLog(`[DOM] Detected: ${id} -> type=${sens.sensitivity_type}, tier=${sens.sensitivity_tier}`, 'info');
+      }
+
+      await sleep(300);
+
+      // Log Sensitivity & Confidence
+      appendLog('\n--- STEP 2: Sensitivity Tiering & Confidence Scoring ---', 'header');
+      for (const el of elements) {
+        const id = getElementId(el);
+        const classification = classifyElement(el);
+        const textToScan = el.value || el.innerText || el.textContent || '';
+        const pii = detectPII(textToScan);
+        const confResult = classifySensitivityWithConfidence(classification, pii, 0.92, textToScan, tokenVault);
+        const badgeColor = getConfidenceBadgeColor(confResult.confidence);
+
+        if (confResult.sensitivity_tier === 1 || confResult.sensitivity_tier === 2) {
+          appendLog(
+            `[TIER] ${id} -> ${confResult.action}, confidence=${confResult.confidence} (${badgeColor})`,
+            badgeColor === 'green' ? 'pass' : (badgeColor === 'yellow' ? 'warn' : 'fail')
+          );
+        }
+      }
+
+      await sleep(300);
+
+      // Execute Orchestrator Engine
+      const payload = processPageForRedaction(elements, mockCanvas, tokenVault);
+
+      // Log Visual Redactions
+      appendLog('\n--- STEP 3: Visual Canvas Redaction ---', 'header');
+      for (const region of payload.redacted_regions) {
+        appendLog(`[REDACT] Drew solid box over ${region.element_id}`, 'warn');
+      }
+      statRedactedEl.textContent = payload.redacted_regions.length;
+
+      // Render sanitized result onto visible canvas
+      // Since processPageForRedaction used mockCanvas and returned base64, render onto canvas
+      const img = new Image();
+      img.onload = () => {
+        const ctx = sanitizedCanvasEl.getContext('2d');
+        ctx.clearRect(0, 0, sanitizedCanvasEl.width, sanitizedCanvasEl.height);
+        ctx.drawImage(img, 0, 0);
+      };
+      img.src = payload.redacted_image_base64;
+
+      await sleep(300);
+
+      // Log Vault Stats
+      appendLog('\n--- STEP 4: Token Vault Statistics ---', 'header');
+      appendLog(`[VAULT] Stats: ${JSON.stringify(tokenVault.getStats())}`, 'info');
+
+      await sleep(300);
+
+      // Audit Check (Leak Gate 1)
+      appendLog('\n--- STEP 5: Payload Leakage Audit (assertSafeToSend) ---', 'header');
+      appendLog('[AUDIT] Running assertSafeToSend()...', 'info');
+
+      let targetPayload = payload;
+
+      if (simulateLeak) {
+        // Deep clone & mutate payload to inject raw card number leak
+        targetPayload = JSON.parse(JSON.stringify(payload));
+        if (targetPayload.dom_summary && targetPayload.dom_summary.elements && targetPayload.dom_summary.elements.length > 0) {
+          targetPayload.dom_summary.elements[0].label_text = '4111 1111 1111 1111';
+        }
+      }
+
+      try {
+        assertSafeToSend(targetPayload, detectPII);
+        appendLog('[AUDIT] PASSED - 0 violations', 'pass');
+      } catch (err) {
+        violationsCount++;
+        appendLog(`[AUDIT] FAILED: ${err.message}`, 'fail');
+        appendLog('[RECOVERY] Leak blocked before transport', 'pass');
+      }
+
+      statViolationsEl.textContent = violationsCount;
+
+      await sleep(300);
+
+      // Consistency Check (Gate 2) — run on ORIGINAL payload and redacted_regions
+      appendLog('\n--- STEP 6: Channel Consistency Verification (assertChannelsConsistent) ---', 'header');
+      appendLog('[CONSISTENCY] Running assertChannelsConsistent()...', 'info');
+
+      try {
+        assertChannelsConsistent(payload, payload.redacted_regions);
+        appendLog('[CONSISTENCY] PASSED - channels agree', 'pass');
+      } catch (err) {
+        appendLog(`[CONSISTENCY] FAILED: ${err.message}`, 'fail');
+      }
+
+      appendLog('\n=== PIPELINE EXECUTION COMPLETE ===', 'header');
+    }
+
+    document.getElementById('btn-run-pipeline').addEventListener('click', () => executePipeline(false));
+    document.getElementById('btn-simulate-leak').addEventListener('click', () => executePipeline(true));
+  </script>
+</body>
+</html>

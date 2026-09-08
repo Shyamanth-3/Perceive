@@ -62,6 +62,7 @@ function getNearbyLabelText(el) {
 
 /**
  * Classifies a DOM element based on form heuristics and sensitivity rules.
+ * Order of evaluation: PASSWORD -> CARD_NUMBER -> EMAIL -> AMOUNT -> PHONE -> NAME -> UNKNOWN
  * @param {HTMLElement} el
  * @returns {{ tag: string, role: string|null, label_text: string|null, is_sensitive: boolean, sensitivity_type: "PASSWORD"|"CARD_NUMBER"|"EMAIL"|"PHONE"|"NAME"|"AMOUNT"|"UNKNOWN"|null }}
  */
@@ -82,7 +83,7 @@ export function classifyElement(el) {
   const autocompleteAttr = (el.getAttribute('autocomplete') || '').toLowerCase();
   const placeholderAttr = (el.getAttribute('placeholder') || '').toLowerCase();
 
-  // BUG 1 FIX: Hard exclusion for buttons
+  // Hard exclusion for buttons
   if (tag === 'button' || typeAttr === 'submit' || typeAttr === 'button' || role === 'button') {
     return {
       tag: 'button',
@@ -129,7 +130,22 @@ export function classifyElement(el) {
     };
   }
 
-  // BUG 3 FIX: Phone detection rule (after Email, before Name)
+  // 4. Amount (Checked BEFORE Phone to prioritize price/total displays over ambiguous nearby sibling text)
+  if (
+    (label_text && /amount|price|total/i.test(label_text)) ||
+    (placeholderAttr && /amount|price|total/i.test(placeholderAttr)) ||
+    (elText && /amount|price|total|\$\d/i.test(elText))
+  ) {
+    return {
+      tag,
+      role,
+      label_text: label_text || (elText || null),
+      is_sensitive: true,
+      sensitivity_type: 'AMOUNT'
+    };
+  }
+
+  // 5. Phone
   if (
     autocompleteAttr.includes('tel') ||
     typeAttr === 'tel' ||
@@ -145,7 +161,7 @@ export function classifyElement(el) {
     };
   }
 
-  // 4. Name
+  // 6. Name
   if (autocompleteAttr.includes('name') || (label_text && /name/i.test(label_text))) {
     return {
       tag,
@@ -153,21 +169,6 @@ export function classifyElement(el) {
       label_text,
       is_sensitive: true,
       sensitivity_type: 'NAME'
-    };
-  }
-
-  // BUG 2 FIX: Amount detection including innerText/textContent matching /amount|price|total|\$\d/i
-  if (
-    (label_text && /amount|price|total/i.test(label_text)) ||
-    (placeholderAttr && /amount|price|total/i.test(placeholderAttr)) ||
-    (elText && /amount|price|total|\$\d/i.test(elText))
-  ) {
-    return {
-      tag,
-      role,
-      label_text: label_text || (elText || null),
-      is_sensitive: true,
-      sensitivity_type: 'AMOUNT'
     };
   }
 

@@ -1,4 +1,5 @@
-const SEMANTIC_TOKEN_PATTERN = /^\[[A-Z_]+(\?|: [^\]]+)?\]$/;
+const SEMANTIC_TOKEN_PATTERN = /^\[[A-Z0-9_]+(?:\?|: [^\]]+)?\]$/;
+const SENSITIVE_KEY_PATTERN = /password|pwd|secret|credit_card|cvv|ssn|aadhaar|otp/i;
 
 /**
  * Recursively walks an object tree and invokes a callback for every string value found.
@@ -36,7 +37,7 @@ function walkStrings(node, path, callback, seen) {
 }
 
 /**
- * Scans an outgoing payload for any raw PII values that leaked through redaction.
+ * Scans an outgoing payload for any raw PII values or sensitive text that leaked through redaction.
  * @param {object} payload - The full payload object to audit.
  * @param {function} piiDetectFn - PII detection function with signature (text: string) => Array<{type: string, match: string}>
  * @returns {{ passed: boolean, violations: Array<{path: string, reason: string, matched_type: string}> }}
@@ -73,6 +74,7 @@ export function auditPayload(payload, piiDetectFn) {
       return;
     }
 
+    // 1. Check PII detection regex matches
     const matches = piiDetectFn(value);
     if (Array.isArray(matches) && matches.length > 0) {
       for (const match of matches) {
@@ -82,6 +84,15 @@ export function auditPayload(payload, piiDetectFn) {
           matched_type: match.type || 'UNKNOWN'
         });
       }
+    }
+
+    // 2. Check for unredacted passwords or secrets in sensitive fields/keys
+    if (SENSITIVE_KEY_PATTERN.test(path) && value && !SEMANTIC_TOKEN_PATTERN.test(value)) {
+      violations.push({
+        path,
+        reason: 'unredacted password or secret string found in sensitive field',
+        matched_type: 'PASSWORD'
+      });
     }
   }, seen);
 
@@ -113,4 +124,25 @@ export function assertSafeToSend(payload, piiDetectFn) {
       ' violation(s). Blocking network request.\n' + details
     );
   }
+}
+
+/**
+ * Higher-order transport wrapper enforcing fail-closed security.
+ * Guarantees assertSafeToSend runs on the final payload immediately before transportFn is called.
+ * If audit fails, transportFn is ZERO-invoked and an Error is thrown.
+ *
+ * @param {function} transportFn - Network send function with signature (payload) => Promise<any> | any
+ * @param {function} piiDetectFn - PII detection function
+ * @returns {function(object): Promise<any> | any} Wrapped transport function
+ */
+export function createSecureTransport(transportFn, piiDetectFn) {
+  if (typeof transportFn !== 'function') {
+    throw new Error('createSecureTransport requires a valid transport function.');
+  }
+
+  return function sendSecurePayload(payload) {
+    // Hard gate assertion on the FINAL assembled payload immediately before transport
+    assertSafeToSend(payload, piiDetectFn);
+    return transportFn(payload);
+  };
 }

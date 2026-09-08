@@ -25,7 +25,8 @@ import { redactImage, canvasToBase64 } from './redaction-renderer.js';
  *     }>
  *   },
  *   redacted_image_base64: string,
- *   detection_confidence_notes: Array<{element_id: string, confidence: number, method: 'dom_heuristic' | 'vision_model' | 'ocr_regex'}>
+ *   detection_confidence_notes: Array<{element_id: string, confidence: number, method: 'dom_heuristic' | 'vision_model' | 'ocr_regex'}>,
+ *   redacted_regions: Array<{element_id: string, bounding_box: {x: number, y: number, w: number, h: number}, sensitivity_tier: 1 | 2 | 3, semantic_token: string | null}>
  * }}
  */
 export function processPageForRedaction(elements = [], sourceCanvasOrImage, tokenVault) {
@@ -35,6 +36,7 @@ export function processPageForRedaction(elements = [], sourceCanvasOrImage, toke
   const confidenceNotes = [];
   const sensitiveRegions = [];
   const sensitiveRawValues = [];
+  const redactedRegionsList = [];
 
   if (Array.isArray(elements)) {
     for (const el of elements) {
@@ -116,6 +118,13 @@ export function processPageForRedaction(elements = [], sourceCanvasOrImage, toke
           sensitivity_tier
         });
 
+        redactedRegionsList.push({
+          element_id,
+          bounding_box,
+          sensitivity_tier,
+          semantic_token
+        });
+
         if (rawValue && String(rawValue).trim()) {
           sensitiveRawValues.push(String(rawValue).trim());
         }
@@ -137,7 +146,8 @@ export function processPageForRedaction(elements = [], sourceCanvasOrImage, toke
       elements: summaryElements
     },
     redacted_image_base64,
-    detection_confidence_notes: confidenceNotes
+    detection_confidence_notes: confidenceNotes,
+    redacted_regions: redactedRegionsList
   };
 
   // Top-level Recursive Guard Assertion: confirm no sensitive raw values leak into output object tree
