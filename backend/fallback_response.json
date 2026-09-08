@@ -1,0 +1,7 @@
+{
+  "type": "click",
+  "target_element_id": "submit-btn-sandbox",
+  "value": null,
+  "risk_tier": "risky",
+  "reasoning_short": "Fallback action: Clicking submit to proceed with the rehearsed demo flow."
+}

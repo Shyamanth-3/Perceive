@@ -1,1 +1,34 @@
 phase0-spike/
+
+# Virtual environments
+venv/
+backend/venv/
+.venv/
+env/
+ENV/
+
+# Environment variables & secrets
+.env
+backend/.env
+server/.env
+*.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Logs & runtime artifacts
+*.log
+*.jsonl
+backend/*.jsonl
+server/*.jsonl
+!fallback_response.json
+
+# IDE settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
