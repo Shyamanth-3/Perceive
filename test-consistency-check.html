@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Channel Consistency Check Tests</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      margin: 0;
+    }
+    h1 {
+      color: #ffffff;
+      font-size: 1.5rem;
+      margin-top: 0;
+    }
+    #console {
+      background-color: #1e1e1e;
+      border: 1px solid #333333;
+      border-radius: 6px;
+      padding: 16px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+    .header {
+      color: #ffd700;
+      font-weight: bold;
+    }
+    .pass {
+      color: #4caf50;
+      font-weight: bold;
+    }
+    .fail {
+      color: #f44336;
+      font-weight: bold;
+    }
+    .info {
+      color: #9e9e9e;
+    }
+    .summary-pass {
+      color: #4caf50;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .summary-fail {
+      color: #f44336;
+      font-size: 16px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Channel Consistency Check Test Runner</h1>
+  <div id="console"></div>
+
+  <script type="module">
+    import { checkChannelConsistency, assertChannelsConsistent } from './channel-consistency-check.js';
+
+    const consoleDiv = document.getElementById('console');
+    let passCount = 0;
+    const totalTests = 4;
+
+    function log(message, className = '') {
+      const span = document.createElement('span');
+      if (className) {
+        span.className = className;
+      }
+      span.textContent = message + '\n';
+      consoleDiv.appendChild(span);
+    }
+
+    function logHeader(text) {
+      log('\n' + text, 'header');
+    }
+
+    // Base payload used across tests
+    const basePayload = {
+      dom_summary: {
+        elements: [
+          { element_id: 'card-1', sensitivity_tier: 1, is_sensitive: true, semantic_token: '[CARD_NUMBER_1]' },
+          { element_id: 'btn-1', sensitivity_tier: 3, is_sensitive: false, semantic_token: null }
+        ]
+      }
+    };
+
+    // TEST CASE 1 — Consistent (should PASS)
+    logHeader('--- TEST CASE 1: Consistent (should PASS) ---');
+    try {
+      const redactedRegions1 = [{ element_id: 'card-1', bounding_box: {} }];
+      const result1 = checkChannelConsistency(basePayload, redactedRegions1);
+      log('Result: ' + JSON.stringify(result1, null, 2), 'info');
+
+      if (result1.consistent === true && Array.isArray(result1.mismatches) && result1.mismatches.length === 0) {
+        log('TEST 1 PASSED', 'pass');
+        passCount++;
+      } else {
+        log('TEST 1 FAILED: Expected consistent === true and mismatches.length === 0', 'fail');
+      }
+    } catch (err) {
+      log('TEST 1 FAILED with unexpected exception: ' + err.message, 'fail');
+    }
+
+    // TEST CASE 2 — Structural says redact, visual missed it (should FAIL / catch the mismatch)
+    logHeader('--- TEST CASE 2: Structural says redact, visual missed it (should FAIL / catch the mismatch) ---');
+    try {
+      const redactedRegions2 = [];
+      const result2 = checkChannelConsistency(basePayload, redactedRegions2);
+      log('Result: ' + JSON.stringify(result2, null, 2), 'info');
+
+      if (
+        result2.consistent === false &&
+        Array.isArray(result2.mismatches) &&
+        result2.mismatches.length === 1 &&
+        result2.mismatches[0].element_id === 'card-1' &&
+        result2.mismatches[0].issue.includes('missing')
+      ) {
+        log('TEST 2 PASSED (correctly caught the mismatch)', 'pass');
+        passCount++;
+      } else {
+        log('TEST 2 FAILED: Expected consistent === false and mismatch for card-1 with missing issue', 'fail');
+      }
+    } catch (err) {
+      log('TEST 2 FAILED with unexpected exception: ' + err.message, 'fail');
+    }
+
+    // TEST CASE 3 — Visual redacted something structural didn't flag (should FAIL / catch over-redaction)
+    logHeader("--- TEST CASE 3: Visual redacted something structural didn't flag (should FAIL / catch over-redaction) ---");
+    try {
+      const redactedRegions3 = [
+        { element_id: 'card-1', bounding_box: {} },
+        { element_id: 'btn-1', bounding_box: {} }
+      ];
+      const result3 = checkChannelConsistency(basePayload, redactedRegions3);
+      log('Result: ' + JSON.stringify(result3, null, 2), 'info');
+
+      const btnMismatch = result3.mismatches.find(m => m.element_id === 'btn-1');
+
+      if (
+        result3.consistent === false &&
+        Array.isArray(result3.mismatches) &&
+        result3.mismatches.length === 1 &&
+        btnMismatch
+      ) {
+        log('TEST 3 PASSED (correctly caught over-redaction)', 'pass');
+        passCount++;
+      } else {
+        log('TEST 3 FAILED: Expected consistent === false and mismatch for btn-1', 'fail');
+      }
+    } catch (err) {
+      log('TEST 3 FAILED with unexpected exception: ' + err.message, 'fail');
+    }
+
+    // TEST CASE 4 — assertChannelsConsistent() throwing behavior
+    logHeader('--- TEST CASE 4: assertChannelsConsistent() throwing behavior ---');
+    try {
+      const redactedRegions4 = [];
+      let threw = false;
+      let caughtError = null;
+
+      try {
+        assertChannelsConsistent(basePayload, redactedRegions4);
+      } catch (e) {
+        threw = true;
+        caughtError = e;
+      }
+
+      if (threw && caughtError && caughtError.message.includes('card-1')) {
+        log('Caught expected Error: ' + caughtError.message, 'info');
+        log('TEST 4 PASSED (threw correctly)', 'pass');
+        passCount++;
+      } else if (!threw) {
+        log('TEST 4 FAILED (did not throw)', 'fail');
+      } else {
+        log('TEST 4 FAILED (wrong error message): ' + caughtError.message, 'fail');
+      }
+    } catch (err) {
+      log('TEST 4 FAILED with unexpected exception: ' + err.message, 'fail');
+    }
+
+    // SUMMARY LINE
+    log('\n' + '='.repeat(40), 'info');
+    const summaryText = `${passCount} / ${totalTests} tests passed`;
+    if (passCount === totalTests) {
+      log(summaryText, 'pass summary-pass');
+    } else {
+      log(summaryText, 'fail summary-fail');
+    }
+  </script>
+</body>
+</html>

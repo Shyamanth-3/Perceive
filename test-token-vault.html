@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Token Vault Tests</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      margin: 0;
+    }
+    h1 {
+      color: #ffffff;
+      font-size: 1.5rem;
+      margin-top: 0;
+    }
+    #console {
+      background-color: #1e1e1e;
+      border: 1px solid #333333;
+      border-radius: 6px;
+      padding: 16px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+    .header {
+      color: #ffd700;
+      font-weight: bold;
+    }
+    .pass {
+      color: #4caf50;
+      font-weight: bold;
+    }
+    .fail {
+      color: #f44336;
+      font-weight: bold;
+    }
+    .info {
+      color: #9e9e9e;
+    }
+    .summary-pass {
+      color: #4caf50;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .summary-fail {
+      color: #f44336;
+      font-size: 16px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Token Vault Test Runner</h1>
+  <div id="console"></div>
+
+  <script type="module">
+    import { createTokenVault } from './token-vault.js';
+
+    const consoleDiv = document.getElementById('console');
+    let passCount = 0;
+    const totalTests = 5;
+
+    function log(message, className = '') {
+      const span = document.createElement('span');
+      if (className) {
+        span.className = className;
+      }
+      span.textContent = message + '\n';
+      consoleDiv.appendChild(span);
+    }
+
+    function logHeader(text) {
+      log('\n' + text, 'header');
+    }
+
+    const vault = createTokenVault();
+
+    // TEST 1 — First-time value gets a fresh token
+    logHeader('--- TEST 1: First-time value gets a fresh token ---');
+    try {
+      const token1 = vault.getOrCreateToken('4111111111111111', 'CARD_NUMBER');
+      log('Actual token1: ' + JSON.stringify(token1), 'info');
+
+      if (token1 === '[CARD_NUMBER_1]') {
+        log('TEST 1 PASSED: Token correctly initialized to [CARD_NUMBER_1]', 'pass');
+        passCount++;
+      } else {
+        log('TEST 1 FAILED: Expected "[CARD_NUMBER_1]", got ' + JSON.stringify(token1), 'fail');
+      }
+    } catch (err) {
+      log('TEST 1 FAILED with unexpected exception: ' + err.message, 'fail');
+    }
+
+    // TEST 2 — Same value seen again returns the SAME token
+    logHeader('--- TEST 2: Same value returns the SAME token ---');
+    try {
+      const token1 = vault.getOrCreateToken('4111111111111111', 'CARD_NUMBER');
+      const token2 = vault.getOrCreateToken('4111111111111111', 'CARD_NUMBER');
+      log('Actual token2: ' + JSON.stringify(token2), 'info');
+
+      if (token2 === token1 && token2 === '[CARD_NUMBER_1]') {
+        log('TEST 2 PASSED: Identical value returned same token strictly (token2 === token1)', 'pass');
+        passCount++;
+      } else {
+        log('TEST 2 FAILED: Expected token2 === token1 === "[CARD_NUMBER_1]", got token2=' + JSON.stringify(token2), 'fail');
+      }
+    } catch (err) {
+      log('TEST 2 FAILED with unexpected exception: ' + err.message, 'fail');
+    }
+
+    // TEST 3 — A DIFFERENT value of the same type gets a NEW incrementing token
+    logHeader('--- TEST 3: Different value gets a NEW incrementing token ---');
+    try {
+      const token1 = vault.getOrCreateToken('4111111111111111', 'CARD_NUMBER');
+      const token3 = vault.getOrCreateToken('5500000000000004', 'CARD_NUMBER');
+      log('Actual token3: ' + JSON.stringify(token3), 'info');
+
+      if (token3 === '[CARD_NUMBER_2]' && token3 !== token1) {
+        log('TEST 3 PASSED: New value got incremented token [CARD_NUMBER_2]', 'pass');
+        passCount++;
+      } else {
+        log('TEST 3 FAILED: Expected "[CARD_NUMBER_2]" distinct from token1, got ' + JSON.stringify(token3), 'fail');
+      }
+    } catch (err) {
+      log('TEST 3 FAILED with unexpected exception: ' + err.message, 'fail');
+    }
+
+    // TEST 4 — resolveToken() correctly reverses token back to raw value, returns null for unknown
+    logHeader('--- TEST 4: resolveToken() reverse lookup ---');
+    try {
+      const resolved1 = vault.resolveToken('[CARD_NUMBER_1]');
+      const resolvedUnknown = vault.resolveToken('[CARD_NUMBER_999]');
+      log('Resolved [CARD_NUMBER_1]: ' + JSON.stringify(resolved1), 'info');
+      log('Resolved [CARD_NUMBER_999]: ' + JSON.stringify(resolvedUnknown), 'info');
+
+      if (resolved1 === '4111111111111111' && resolvedUnknown === null) {
+        log('TEST 4 PASSED: Resolved correctly ("4111111111111111" and null for unknown)', 'pass');
+        passCount++;
+      } else {
+        log(
+          'TEST 4 FAILED: Expected resolved1 === "4111111111111111" (got ' +
+            JSON.stringify(resolved1) +
+            ') and resolvedUnknown === null (got ' +
+            JSON.stringify(resolvedUnknown) +
+            ')',
+          'fail'
+        );
+      }
+    } catch (err) {
+      log('TEST 4 FAILED with unexpected exception: ' + err.message, 'fail');
+    }
+
+    // TEST 5 — clear() wipes state, getStats() reflects it, resolution fails
+    logHeader('--- TEST 5: clear() wipes vault state ---');
+    try {
+      vault.clear();
+      const statsAfterClear = vault.getStats();
+      const resolvedAfterClear = vault.resolveToken('[CARD_NUMBER_1]');
+      log('statsAfterClear: ' + JSON.stringify(statsAfterClear), 'info');
+      log('resolvedAfterClear: ' + JSON.stringify(resolvedAfterClear), 'info');
+
+      if (statsAfterClear.totalTokens === 0 && resolvedAfterClear === null) {
+        log('TEST 5 PASSED: clear() successfully wiped all tokens and stats', 'pass');
+        passCount++;
+      } else {
+        log(
+          'TEST 5 FAILED: Expected totalTokens === 0 (got ' +
+            statsAfterClear.totalTokens +
+            ') and resolvedAfterClear === null (got ' +
+            JSON.stringify(resolvedAfterClear) +
+            ')',
+          'fail'
+        );
+      }
+    } catch (err) {
+      log('TEST 5 FAILED with unexpected exception: ' + err.message, 'fail');
+    }
+
+    // BONUS SECURITY CHECK
+    logHeader('--- BONUS SECURITY CHECK ---');
+    if (vault.getAllValues === undefined && vault.getAllTokens === undefined) {
+      log('Security check: no bulk-export method exposed', 'pass');
+    } else {
+      log('Security check WARNING: bulk-export method detected on vault instance!', 'fail');
+    }
+
+    // SUMMARY LINE
+    log('\n' + '='.repeat(40), 'info');
+    const summaryText = `${passCount} / ${totalTests} tests passed`;
+    if (passCount === totalTests) {
+      log(summaryText, 'pass summary-pass');
+    } else {
+      log(summaryText, 'fail summary-fail');
+    }
+  </script>
+</body>
+</html>
