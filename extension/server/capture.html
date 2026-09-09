@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Perceive Capture Fixture</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 24px; }
+    section { margin: 16px 0; padding: 16px; border: 1px solid #ccc; border-radius: 8px; }
+    label { display: inline-block; width: 140px; }
+    #box-fixture { width: 200px; height: 120px; position: absolute; top: 40px; left: 40px; background: #08c; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="capture-fixture-title">Capture Fixture</h1>
+  </header>
+
+  <section id="capture-fixture">
+    <button id="cta" type="button" title="primary action">Submit</button>
+    <p><input id="search" type="search" placeholder="search products" /></p>
+    <p><label for="email-fixture">Email address</label><input id="email-fixture" type="email" autocomplete="email" value="demo@perceive.test" /></p>
+    <p><label for="password-fixture">Password</label><input id="password-fixture" type="password" autocomplete="current-password" value="not-a-real-password" /></p>
+    <p><input id="file-fixture" type="file" /></p>
+    <p><input id="hidden-token" type="hidden" value="sekrit-token" /></p>
+    <p><textarea id="message">hello from fixture</textarea></p>
+    <p><div id="editor" contenteditable="true">editable prose the extension must never capture</div></p>
+    <!-- Dev 1→Dev 2 integration fixtures (synthetic, deterministic, never
+         real): card/phone/aadhaar/otp/ifsc/name/amount, matching the
+         master doc's privacy-verification test set. -->
+    <p><label for="card-fixture">Card number</label><input id="card-fixture" type="text" autocomplete="cc-number" value="4111111111111111" /></p>
+    <p><label for="phone-fixture">Phone</label><input id="phone-fixture" type="tel" value="9999999999" /></p>
+    <p><label for="aadhaar-fixture">Aadhaar</label><input id="aadhaar-fixture" type="text" value="234567890123" /></p>
+    <p><label for="otp-fixture">OTP</label><input id="otp-fixture" type="text" placeholder="Enter OTP" value="482913" /></p>
+    <p><label for="ifsc-fixture">IFSC</label><input id="ifsc-fixture" type="text" value="HDFC0001234" /></p>
+    <p><label for="name-fixture">Full name</label><input id="name-fixture" type="text" autocomplete="name" value="Priya Sharma" /></p>
+    <p><label for="amount-fixture">Total amount</label><input id="amount-fixture" type="text" placeholder="Total price" value="45.00" /></p>
+  </section>
+
+  <section id="mutate-target" aria-live="polite"><p>mutation target</p></section>
+
+  <div id="box-fixture"></div>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Perceive – Offscreen Inference Host</title>
+  </head>
+  <body>
+    <!--
+      Phase 1: minimal execution host only. No model, no weights, no inference.
+      Phase 4 will mount the ONNX runtime pipeline here (WebGPU primary,
+      WASM fallback) per Phase 0 results. Canvas used by the ONNX
+      pre-processor will be added then.
+    -->
+    <div style="font-family: system-ui; padding: 12px; color: #555">
+      Perceive offscreen inference host (Phase 1 scaffold – idle).
+    </div>
+    <script type="module" src="offscreen.js"></script>
+  </body>
+</html>

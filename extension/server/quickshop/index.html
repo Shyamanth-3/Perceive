@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickShop Demo — Secure Checkout</title>
+    <link rel="stylesheet" href="sandbox.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏪 QuickShop Demo — Secure Checkout</h1>
+        </header>
+
+        <!-- Step 1: Login -->
+        <section id="login-section">
+            <h2>── Step 1: Login ──</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-email">Email:</label>
+                    <input type="email" id="login-email" name="email" autocomplete="email" aria-label="Email address" data-element-id="login-email" value="priya.sharma@example.com" />
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password:</label>
+                    <input type="password" id="login-password" name="password" autocomplete="current-password" aria-label="Password" data-element-id="login-password" value="D3m0P@ss!" />
+                </div>
+                <button type="submit" id="login-submit" data-element-id="login-submit">Login</button>
+            </form>
+        </section>
+
+        <!-- Step 2: Checkout -->
+        <section id="checkout-section" class="hidden">
+            <h2>── Step 2: Checkout (shown after login) ──</h2>
+            
+            <div class="saved-payment-method" data-element-id="saved-card-display">
+                <p><strong>Saved Payment Method</strong></p>
+                <p><span class="card-icon">💳</span> Visa ending in 7890</p>
+                <p><span id="saved-card-full" data-element-id="saved-card-full" data-sensitivity="cc-number">4111 1111 1111 7890</span></p>
+                <p><small>(same card number used for payment below)</small></p>
+            </div>
+
+            <form id="checkout-form">
+                <div class="form-group">
+                    <label for="full-name">Full Name:</label>
+                    <input type="text" id="full-name" name="name" autocomplete="name" aria-label="Full name" data-element-id="full-name" />
+                </div>
+                <div class="form-group">
+                    <label for="card-number">Card Number:</label>
+                    <input type="text" id="card-number" name="cardnumber" autocomplete="cc-number" aria-label="Card number" inputmode="numeric" pattern="\d{4}\s?\d{4}\s?\d{4}\s?\d{4}" data-element-id="card-number" />
+                </div>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="card-expiry">Expiry (MM/YY):</label>
+                        <input type="text" id="card-expiry" name="cc-exp" autocomplete="cc-exp" aria-label="Expiry date" data-element-id="card-expiry" />
+                    </div>
+                    <div class="form-group half">
+                        <label for="card-cvv">CVV:</label>
+                        <input type="text" id="card-cvv" name="cvc" autocomplete="cc-csc" aria-label="CVV" data-element-id="card-cvv" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone:</label>
+                    <input type="tel" id="phone" name="phone" autocomplete="tel" aria-label="Phone number" data-element-id="phone" />
+                </div>
+                <div class="form-group">
+                    <label for="billing-address">Billing Addr:</label>
+                    <textarea id="billing-address" name="address" autocomplete="street-address" aria-label="Billing address" data-element-id="billing-address"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="aadhaar">Aadhaar (opt):</label>
+                    <input type="text" id="aadhaar" name="aadhaar" aria-label="Aadhaar number" data-element-id="aadhaar" />
+                </div>
+                
+                <div class="order-summary">
+                    <p>Order Total: <span id="order-total" data-element-id="order-total">₹2,499.00</span></p>
+                </div>
+
+                <button type="submit" id="pay-now" data-element-id="pay-now">Pay Now</button>
+            </form>
+        </section>
+
+        <!-- Step 3: Confirmation -->
+        <section id="confirmation-section" class="hidden">
+            <h2>── Step 3: Confirmation ──</h2>
+            <div class="success-message">
+                <p>✅ "Order placed successfully!"</p>
+            </div>
+        </section>
+    </div>
+    <script src="sandbox.js"></script>
+    <!-- Dev 4's own e2eRunner.js (its mocked harness) intentionally not
+         included here — this fixture is driven by the real orchestrator
+         via __perceiveRunTaskLoop for the Dev 3 → Dev 4 integration gate. -->
+</body>
+</html>

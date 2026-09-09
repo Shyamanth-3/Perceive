@@ -1,1 +1,13 @@
 phase0-spike/
+backend-server/.env
+backend-server/.venv/
+**/__pycache__/
+backend-server/audit.jsonl
+
+extension/node_modules/
+extension/dist/
+extension/models-cache/
+extension/verify-results.json
+extension/verify-full-checkout-results.json
+
+.DS_Store

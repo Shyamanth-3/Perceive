@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Perceive",
+  "version": "0.1.0",
+  "description": "Local, on-device vision inference for accessibility insights. No data leaves the device.",
+  "minimum_chrome_version": "116",
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "permissions": ["offscreen"],
+  "host_permissions": ["<all_urls>"],
+  "content_scripts": [
+    {
+      "matches": ["http://127.0.0.1/*", "http://localhost/*"],
+      "js": ["content/content-script.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["wasm/*", "models/*"],
+      "matches": ["http://127.0.0.1/*", "http://localhost/*"]
+    }
+  ]
+}

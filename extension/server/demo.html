@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QuickShop — Perceive demo storefront</title>
+  <style>
+    :root { color-scheme: light; }
+    body { font-family: system-ui, sans-serif; margin: 0; background: #f6f7f9; color: #16202b; }
+    header.site { background: #0b3f66; color: #fff; padding: 14px 24px; display: flex; align-items: center; gap: 16px; }
+    header.site h1 { font-size: 20px; margin: 0; }
+    #cart-badge { margin-left: auto; background: #ffb547; color: #16202b; border-radius: 20px; padding: 4px 12px; font-weight: 700; }
+    main { max-width: 960px; margin: 24px auto; padding: 0 24px; }
+    #promo { background: #fff8e6; border: 1px solid #ffd27a; border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; }
+    .products { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+    .card { background: #fff; border: 1px solid #e1e5ea; border-radius: 12px; padding: 16px; }
+    .card img { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; background: #eef2f6; }
+    .card h3 { margin: 8px 0 4px; font-size: 16px; }
+    .card p { margin: 4px 0; color: #5c6b7a; font-size: 13px; }
+    .price { color: #0b3f66; font-weight: 700; }
+    .actions { display: flex; gap: 8px; margin-top: 12px; }
+    button { border: 0; border-radius: 8px; padding: 10px 14px; font-weight: 600; cursor: pointer; }
+    .add { background: #0b3f66; color: #fff; }
+    #checkout-form { background: #fff; border: 1px solid #e1e5ea; border-radius: 12px; padding: 20px; margin-top: 28px; }
+    #checkout-form h2 { margin-top: 0; }
+    #checkout-form label { display: block; margin-top: 10px; font-size: 13px; font-weight: 600; }
+    #checkout-form input { width: 100%; max-width: 440px; padding: 9px 10px; border: 1px solid #cdd4dc; border-radius: 8px; margin-top: 4px; }
+    .status { margin-top: 10px; font-size: 13px; color: #5c6b7a; }
+  </style>
+</head>
+<body>
+  <header class="site">
+    <h1 id="store-name">QuickShop</h1>
+    <span id="cart-badge" role="status" aria-live="polite">🛒 0 items</span>
+  </header>
+
+  <main>
+    <div id="promo" role="note">
+      <strong>Free shipping</strong> on orders over $25 · checkout looks up your cart automatically.
+    </div>
+
+    <section class="products" aria-label="Featured products">
+      <article class="card" data-sku="SKU-1001">
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDYwIDYwIj48cmVjdCB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IiNlZWYyZjYiLz48dGV4dCB4PSI2IiB5PSIzNCIgZm9udC1zaXplPSIxMCIgZmlsbD0iIzVjNmI3YSI+a2V0dGxlPC90ZXh0Pjwvc3ZnPg==" alt="Teal kettle" />
+        <h3>Teal Kettle</h3>
+        <p class="price">$29.00</p>
+        <div class="actions"><button class="add" data-add="Teal Kettle">Add to cart</button></div>
+      </article>
+
+      <article class="card" data-sku="SKU-1002">
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDYwIDYwIj48cmVjdCB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IiNlZWYyZjYiLz48dGV4dCB4PSI2IiB5PSIzNCIgZm9udC1zaXplPSIxMCBmaWxsPSIjNWM2YjdhIj5jaGFpcjwvdGV4dD48L3N2Zz4=" alt="Linen chair" />
+        <h3>Linen Chair</h3>
+        <p class="price">$149.00</p>
+        <div class="actions"><button class="add" data-add="Linen Chair">Add to cart</button></div>
+      </article>
+
+      <article class="card" data-sku="SKU-1003">
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDYwIDYwIj48cmVjdCB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IiNlZWYyZjYiLz48dGV4dCB4PSI2IiB5PSIzNCIgZm9udC1zaXplPSIxMCBmaWxsPSIjNWM2YjdhIj5sYW1wPC90ZXh0Pjwvc3ZnPg==" alt="Brass lamp" />
+        <h3>Brass Lamp</h3>
+        <p class="price">$59.00</p>
+        <div class="actions"><button class="add" data-add="Brass Lamp">Add to cart</button></div>
+      </article>
+    </section>
+
+    <form id="checkout-form" novalidate>
+      <h2>Checkout</h2>
+      <label for="order-email">Email</label>
+      <input id="order-email" type="email" name="email" autocomplete="email" placeholder="you@example.com" />
+      <label for="order-address">Street address</label>
+      <input id="order-address" type="text" name="address" autocomplete="street-address" placeholder="123 Main St" />
+      <label for="order-cc">Card number</label>
+      <input id="order-cc" type="text" inputmode="numeric" autocomplete="cc-number" placeholder="0000 0000 0000 0000" />
+      <div class="actions" style="margin-top:16px">
+        <button type="submit" style="background:#0b3f66;color:#fff">Place order</button>
+      </div>
+      <p class="status" id="order-status"></p>
+    </form>
+  </main>
+
+  <script>
+    let cartCount = 0;
+    const badge = document.getElementById("cart-badge");
+    const cards = document.querySelectorAll(".add");
+    cards.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        cartCount += 1;
+        badge.textContent = "\uD83D\uDED2 " + cartCount + (cartCount === 1 ? " item" : " items");
+      });
+    });
+    const form = document.getElementById("checkout-form");
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const email = document.getElementById("order-email").value;
+      const status = document.getElementById("order-status");
+      if (!email) { status.textContent = "Please enter your email."; return; }
+      status.textContent = "Order placed for " + email + " — demo only, nothing is submitted.";
+    });
+  </script>
+</body>
+</html>
